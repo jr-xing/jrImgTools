@@ -55,6 +55,9 @@ from matplotlib.backends.backend_tkagg import (
 from matplotlib.backend_bases import key_press_handler
 from matplotlib.figure import Figure
 
+from process.imgProcess import bwperim
+from imgIO import safeLoadMedicalImg
+
 # import mahotas
 import numpy.ma as ma
 
@@ -63,32 +66,6 @@ def getDice(seg1, seg2):
 
 def getDicePerSlice(seg1, seg2):
     pass
-
-from scipy.ndimage.morphology import binary_erosion, generate_binary_structure
-def bwperim(BW, dim=3, conn=6):
-    # generate_binary_structure and matlab bwperim interpret conn differently
-    # Here we keep consist with Matlab function
-    # vol = np.bool(vol)    
-    BW = BW > 0
-    if dim == 2:
-        if conn in [4,8]:
-            if conn == 4:
-                conn = 1
-            else:
-                conn = 2
-    elif dim == 3:
-        if conn in [6,18,26]:
-            if conn == 6:
-                conn = 1
-            elif conn == 18:
-                conn = 2
-            else:
-                conn = 3
-    # print(dim)
-    conn_structure = generate_binary_structure(dim, conn)
-    BWErode = binary_erosion(BW, structure=conn_structure)
-    BWPeirm = BW ^ BWErode
-    return BWPeirm
 
 class VolSlicer(threading.Thread):
 
@@ -219,56 +196,12 @@ class VolSlicer(threading.Thread):
 
         self.root.mainloop()
 
-import SimpleITK as sitk
-def safeLoadMedicalImg(filename):
-    """Load single image file of common medical image types
-    
 
-    Parameters
-    ----------
-    filename : TYPE
-        DESCRIPTION.
-
-    Raises
-    ------
-    ValueError
-        DESCRIPTION.
-
-    Returns
-    -------
-    img : TYPE
-        DESCRIPTION.
-
-    """
-    
-    img = sitk.GetArrayFromImage(sitk.ReadImage(filename))
-    if np.ndim(img) != 3:
-        raise ValueError(f'Unsupported image dim {np.ndim(img)} (with shape {img.shape})')
-    
-    # Strangely, [80, 70, 50] image become [50, 80, 70]!
-    # i.e. [H, W, N] => [N, H, W]
-    img = np.moveaxis(img, 0, 2)
-    
-    #sliceDim = 2 if sliceDim == -1 else sliceDim
-    #img = np.moveaxis(img, sliceDim, -1)
-    return img
-# img = np.random.rand(128,128)
-# vol = np.random.rand(1, 50, 128, 128, 1)
 if __name__ == '__main__':
-    volRaw = safeLoadMedicalImg('./ep2d_dbsi_22_3X3mm_4d_001-axi-odd.nii')
-    segRaw = safeLoadMedicalImg('./ep2d_dbsi_22_3X3mm_4d_001.labels-axi-odd.nii')
-    seg4Raw = safeLoadMedicalImg('./ep2d_dbsi_22_3X3mm_4d_004.labels-axi-odd.nii')
-    vol = np.moveaxis(volRaw, -1,0)[np.newaxis, :,:,:,np.newaxis]
-    seg = np.moveaxis(segRaw, -1,0)[np.newaxis, :,:,:,np.newaxis]
-    seg4 = np.moveaxis(seg4Raw, -1,0)[np.newaxis, :,:,:,np.newaxis]
-    # seg = mahotas.bwperim(seg, 16)
+    vol = np.random.rand(1, 50, 128, 128, 1)
     volInfo = {
         'DicePerSlice': np.random.rand(50),
         'Seg Method': 'Graph Cut'
         }
     slicesInfo = [{'Dice': 0.5}]*50
-    app = VolSlicer(vol, volInfo = volInfo, slicesInfo = slicesInfo, segs=[seg, seg4])
-# print('Now we can continue running code while mainloop runs!')
-
-# for i in range(20):
-#     print(i)
+    app = VolSlicer(vol, volInfo = volInfo, slicesInfo = slicesInfo)
