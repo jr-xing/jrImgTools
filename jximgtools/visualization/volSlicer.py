@@ -55,28 +55,53 @@ from matplotlib.backends.backend_tkagg import (
 from matplotlib.backend_bases import key_press_handler
 from matplotlib.figure import Figure
 
-from ..process.imgProcess import bwperim
-from ..imgIO import safeLoadMedicalImg
+# from ..process.imgProcess import bwperim
+# from ..imgIO import safeLoadMedicalImg
+from process.imgProcess import bwperim
+from imgIO import safeLoadMedicalImg
 
 # import mahotas
 import numpy.ma as ma
 
-def getDice(seg1, seg2):
-    pass
+def normVol(vol):
+    vol = vol.astype(float)
+    return (vol - np.min(vol)) / (np.max(vol) - np.min(vol))
 
-def getDicePerSlice(seg1, seg2):
-    pass
+def sliceVol(vol, sliceIdx, sliceDim=0):
+    slc = [slice(None)] * np.ndim(vol)
+    if np.ndim(vol) in [3,4]:
+        # [D, H, W]
+        # [D, H, W, C]
+        slc[sliceDim] = slice(sliceIdx, sliceIdx + 1)
+    elif np.ndim(vol) == 5:
+        # [N, D, H, W, C]
+        slc[sliceDim+1] = slice(sliceIdx, sliceIdx + 1)
+    return np.squeeze(vol[tuple(slc)])
+
+def getSliceNum(vol, sliceDim):
+    if np.ndim(vol) in [3,4]:
+        # [D, H, W]
+        # [D, H, W, C]
+        return vol.shape[sliceDim]
+    elif np.ndim(vol) == 5:
+        # [N, D, H, W, C]
+        return vol.shape[sliceDim + 1]
+    else:
+        raise ValueError('!')
 
 class VolSlicer(threading.Thread):
 
-    def __init__(self, vol, volInfo = {}, segs = [], slicesInfo = []):
+    def __init__(self, vol, volInfo = {}, segs = [], slicesInfo = None):
         threading.Thread.__init__(self)
-        self.vol = vol
-        self.volInfo = volInfo
+        self.vol = normVol(vol)
+        self.volInfo = volInfo        
         self.segs = segs
-        self.slicesInfo = slicesInfo
         
-        self.sliceIdx = vol.shape[1]//2    
+        self.sliceDim = volInfo.get('sliceDim', 0)
+        self.sliceNum = getSliceNum(vol, self.sliceDim)
+        self.slicesInfo = slicesInfo if slicesInfo != None else [{}]*self.sliceNum
+        
+        self.sliceIdx = self.sliceNum//2    
         
         self.start()
 
@@ -93,23 +118,27 @@ class VolSlicer(threading.Thread):
         
         def updateSlice():
             # Show image
-            sliceAx.imshow(np.squeeze(self.vol[0,self.sliceIdx-1,:,:,:]), cmap='gray')
+            # sliceAx.imshow(np.squeeze(self.vol[0,self.sliceIdx-1,:,:,:]), cmap='gray')
+            sliceAx.imshow(sliceVol(self.vol, self.sliceIdx-1, self.sliceDim), cmap='gray', vmax = 1)
             sliceFig.canvas.draw_idle()
             sliceSlider.set(self.sliceIdx)
             
             cmaps = ['autumn', 'winter', 'summer']
             for segIdx, seg in enumerate(self.segs):
                 # segSlice = seg[0,self.sliceIdx, :,:,:].squeeze()
-                segSlice = bwperim(seg[0,self.sliceIdx, :,:,:].squeeze(), 2, 4)
+                # segSlice = bwperim(seg[0,self.sliceIdx, :,:,:].squeeze(), 2, 4)
+                segSlice = sliceVol(seg, self.sliceIdx-1, self.sliceDim)
+                segSlice = bwperim(segSlice, 2, 4)
                 
                 segSliceMask = ma.masked_array(data = np.ones(segSlice.shape), mask = 1-segSlice)
                 # maskedImg = ma.masked_array(data = np.ones(seg.shape), mask = 1-seg)
                 # maskedImgSlice = np.squeeze(maskedImg[0,self.sliceIdx-1, :,:,:])
-                sliceAx.imshow(segSliceMask, alpha=0.7, cmap = cmaps[segIdx])
+                sliceAx.imshow(segSliceMask, alpha=0.6, cmap = cmaps[segIdx])
             
             # Update slice Info
             sliceInfoStr = ''
-            sliceInfoStr += 'Slice {}/{}\n'.format(self.sliceIdx, D)
+            sliceInfoStr += 'Slice {}/{}\n'.format(self.sliceIdx, self.sliceNum)
+            # print(len(self.slicesInfo))
             for sliceInfoKey in self.slicesInfo[self.sliceIdx-1].keys():
                 sliceInfoStr += sliceInfoKey + ':\t' + str(self.slicesInfo[self.sliceIdx-1][sliceInfoKey]) + '\n'
             sliceInfoLabel['text'] = sliceInfoStr
@@ -118,17 +147,19 @@ class VolSlicer(threading.Thread):
             self.sliceIdx = max(1, self.sliceIdx - 1)
             updateSlice()
         def onRightArrowKey(event):
-            self.sliceIdx = min(D, self.sliceIdx + 1)
+            self.sliceIdx = min(self.sliceNum, self.sliceIdx + 1)
             updateSlice()
         
         
         self.root.bind('<Left>', onLeftArrowKey)
         self.root.bind('<Right>', onRightArrowKey)
         
-        [N, D, H, W, C] = self.vol.shape
+        # [N, D, H, W, C] = self.vol.shape
         sliceFig = Figure(figsize=(5, 4), dpi=100)        
         sliceAx = sliceFig.add_subplot(111)
-        sliceAx.imshow(np.squeeze(self.vol[0,self.sliceIdx, :,:,:]), cmap='gray')
+        # sliceAx.imshow(np.squeeze(self.vol[0,self.sliceIdx, :,:,:]), cmap='gray')
+        # sliceAx.imshow(np.squeeze(self.vol[0,self.sliceIdx, :,:,:]), cmap='gray')
+        sliceAx.imshow(sliceVol(self.vol, self.sliceIdx-1, self.sliceDim), cmap='gray')
 
         sliceCanvas = FigureCanvasTkAgg(sliceFig, master=self.root)  # A tk.DrawingArea.
         sliceCanvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=1)
@@ -138,10 +169,10 @@ class VolSlicer(threading.Thread):
         toolbar = NavigationToolbar2Tk(sliceCanvas, self.root)
         toolbar.update()
               
-        def on_key_press(event):
-            print("you pressed {}".format(event.key))
-            key_press_handler(event, sliceCanvas, toolbar)
-        sliceCanvas.mpl_connect("key_press_event", on_key_press)
+        # def on_key_press(event):
+        #     print("you pressed {}".format(event.key))
+        #     key_press_handler(event, sliceCanvas, toolbar)
+        # sliceCanvas.mpl_connect("key_press_event", on_key_press)
         
         
         # def _quit():
@@ -169,7 +200,7 @@ class VolSlicer(threading.Thread):
             dicePlotCanvas.draw()
             
         # Choose slice to show
-        sliceSlider = tk.Scale(master = self.root, from_= 1, to_=D, orient=tk.HORIZONTAL, command=sliceSliderChange, length=350)
+        sliceSlider = tk.Scale(master = self.root, from_= 1, to_=self.sliceNum, orient=tk.HORIZONTAL, command=sliceSliderChange, length=350)
         sliceSlider.set(self.sliceIdx)
         sliceSlider.place(relwidth=1)
         sliceSlider.pack(side = tk.TOP, expand = False)

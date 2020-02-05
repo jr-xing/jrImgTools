@@ -7,7 +7,9 @@ jxImgTools.egg-info/dependency_links.txt
 jxImgTools.egg-info/requires.txt
 jxImgTools.egg-info/top_level.txt
 jximgtools/__init__.py
+jximgtools/demo.py
 jximgtools/imgIO.py
+jximgtools/metric.py
 jximgtools/process/__init__.py
 jximgtools/process/imgProcess.py
 jximgtools/visualization/__init__.py
