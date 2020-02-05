@@ -55,8 +55,8 @@ from matplotlib.backends.backend_tkagg import (
 from matplotlib.backend_bases import key_press_handler
 from matplotlib.figure import Figure
 
-from process.imgProcess import bwperim
-from imgIO import safeLoadMedicalImg
+from ..process.imgProcess import bwperim
+from ..imgIO import safeLoadMedicalImg
 
 # import mahotas
 import numpy.ma as ma

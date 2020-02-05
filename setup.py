@@ -12,8 +12,8 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
      name='jxImgTools',  
-     version='0.1',
-     scripts=['jxImgTools'] ,
+     version='0.31',
+     scripts=['jxImgTools_setup'] ,
      author="Jerry Xing",
      author_email="j.xing.www@gmail.com",
      description="Image utility functions for personal use",
@@ -21,6 +21,12 @@ setuptools.setup(
    long_description_content_type="text/markdown",
      url="https://github.com/jr-xing/jxImgTools",
      packages=setuptools.find_packages(),
+     install_requires=[
+        'numpy',
+        'scipy',
+        'matplotlib',
+        'SimpleITK'
+      ],
      classifiers=[
          "Programming Language :: Python :: 3",
          "License :: OSI Approved :: MIT License",
