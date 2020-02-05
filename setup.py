@@ -12,7 +12,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
      name='jxImgTools',  
-     version='0.4.2',
+     version='0.4.3',
      scripts=['jxImgTools_setup'] ,
      author="Jerry Xing",
      author_email="j.xing.www@gmail.com",
@@ -28,7 +28,7 @@ setuptools.setup(
         'SimpleITK'
       ],
      classifiers=[
-         "Programming Language :: Python :: 3",
+         "Programming Language :: Python",
          "License :: OSI Approved :: MIT License",
          "Operating System :: OS Independent",
      ],
