@@ -12,7 +12,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
      name='jxImgTools',  
-     version='0.4',
+     version='0.4.2',
      scripts=['jxImgTools_setup'] ,
      author="Jerry Xing",
      author_email="j.xing.www@gmail.com",

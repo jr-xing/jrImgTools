@@ -95,7 +95,8 @@ class VolSlicer(threading.Thread):
         threading.Thread.__init__(self)
         self.vol = normVol(vol)
         self.volInfo = volInfo        
-        self.segs = segs
+        # self.segs = segs
+        self.segs = [seg > 0 for seg in segs]
         
         self.sliceDim = volInfo.get('sliceDim', 0)
         self.sliceNum = getSliceNum(vol, self.sliceDim)

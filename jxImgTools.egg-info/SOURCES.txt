@@ -10,6 +10,7 @@ jximgtools/__init__.py
 jximgtools/demo.py
 jximgtools/imgIO.py
 jximgtools/metric.py
+jximgtools/utils.py
 jximgtools/process/__init__.py
 jximgtools/process/imgProcess.py
 jximgtools/visualization/__init__.py

@@ -24,10 +24,13 @@ seg2[29, 40:88, 40:88] = 1
 #%% 1. Processing
 
 #%% 
-from metric import dicePerSlice
+# from jximgtools.metric import dicePerSlice, dice
+# from jximgtools.visualization.volSlicer import VolSlicer
+from metric import dicePerSlice, dice
 from visualization.volSlicer import VolSlicer
 
 # slicesInfo = [{'info':'Slice # {}'.format(sliceIdx+1) for sliceIdx in range(50)}]
+dicee = dice(seg1, seg2)
 dices = dicePerSlice(seg1, seg2)
 volInfo = {'Name': 'Test Volume', 'DicePerSlice': dices}
 slicesInfo = [{'Dice': dices[sliceIdx]} for sliceIdx in range(50)]
