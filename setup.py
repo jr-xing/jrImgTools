@@ -12,7 +12,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
      name='jxImgTools',  
-     version='0.4.3',
+     version='0.4.4',
      scripts=['jxImgTools_setup'] ,
      author="Jerry Xing",
      author_email="j.xing.www@gmail.com",
@@ -27,9 +27,9 @@ setuptools.setup(
         'matplotlib',
         'SimpleITK'
       ],
-     classifiers=[
-         "Programming Language :: Python",
-         "License :: OSI Approved :: MIT License",
-         "Operating System :: OS Independent",
-     ],
+    #  classifiers=[
+    #      "Programming Language :: Python :: 3",
+    #      "License :: OSI Approved :: MIT License",
+    #      "Operating System :: OS Independent",
+    #  ],
  )

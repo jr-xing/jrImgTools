@@ -44,23 +44,26 @@
 +------------------------------------------------+
 
 """
-import tkinter as tk
+import sys
+if sys.version_info.major == 2:
+    import Tkinter as tk
+else:
+    import tkinter as tk
 import threading
 import numpy as np
 
-from tkinter import StringVar
+# from tkinter import StringVar
 from matplotlib.backends.backend_tkagg import (
     FigureCanvasTkAgg, NavigationToolbar2Tk)
 # Implement the default Matplotlib key bindings.
-from matplotlib.backend_bases import key_press_handler
+# from matplotlib.backend_bases import key_press_handler
 from matplotlib.figure import Figure
 
 # from ..process.imgProcess import bwperim
 # from ..imgIO import safeLoadMedicalImg
 from process.imgProcess import bwperim
-from imgIO import safeLoadMedicalImg
+# from imgIO import safeLoadMedicalImg
 
-# import mahotas
 import numpy.ma as ma
 
 def normVol(vol):
@@ -91,7 +94,7 @@ def getSliceNum(vol, sliceDim):
 
 class VolSlicer(threading.Thread):
 
-    def __init__(self, vol, volInfo = {}, segs = [], slicesInfo = None):
+    def __init__(self, vol, volInfo = {}, segs = [], slicesInfo = None, DicePerSlice = None):
         threading.Thread.__init__(self)
         self.vol = normVol(vol)
         self.volInfo = volInfo        
@@ -101,6 +104,7 @@ class VolSlicer(threading.Thread):
         self.sliceDim = volInfo.get('sliceDim', 0)
         self.sliceNum = getSliceNum(vol, self.sliceDim)
         self.slicesInfo = slicesInfo if slicesInfo != None else [{}]*self.sliceNum
+        self.DicePerSlice = DicePerSlice
         
         self.sliceIdx = self.sliceNum//2    
         
@@ -108,6 +112,7 @@ class VolSlicer(threading.Thread):
 
     def callback(self):
         self.root.quit()
+        self.root.destroy()
         
     def run(self):
         self.root = tk.Tk()
@@ -124,7 +129,7 @@ class VolSlicer(threading.Thread):
             sliceFig.canvas.draw_idle()
             sliceSlider.set(self.sliceIdx)
             
-            cmaps = ['autumn', 'winter', 'summer']
+            cmaps = ['autumn', 'winter', 'summer', 'spring', 'cool', 'Wistia']
             for segIdx, seg in enumerate(self.segs):
                 # segSlice = seg[0,self.sliceIdx, :,:,:].squeeze()
                 # segSlice = bwperim(seg[0,self.sliceIdx, :,:,:].squeeze(), 2, 4)
@@ -189,11 +194,10 @@ class VolSlicer(threading.Thread):
         # button.pack(side=tk.BOTTOM)
         
         # Plot Dice per slice if provided
-        dicePerSlice = self.volInfo.get('DicePerSlice', None)
-        if dicePerSlice is not None:            
+        if self.DicePerSlice is not None:            
             dicePlotFig = Figure(figsize = (1,1))
             dicePlotAx = dicePlotFig.add_subplot(111)
-            dicePlotAx.stem(dicePerSlice, use_line_collection = True)
+            dicePlotAx.stem(self.DicePerSlice, use_line_collection = True)
             dicePlotAx.set_xlabel('SliceIdx')
             dicePlotAx.set_ylabel('Dice')
             dicePlotCanvas = FigureCanvasTkAgg(dicePlotFig, master=self.root)
