@@ -20,6 +20,10 @@ seg2 = np.zeros((50, 128, 128))
 seg2[20:29, 45:95, 45:95] = 1
 seg2[29, 40:88, 40:88] = 1
 
+fig, axs = plt.subplots(1,3)
+axs[0].imshow(np.squeeze(vol[25,:,:]), cmap='gray')
+axs[1].imshow(np.squeeze(seg1[25,:,:]), cmap='gray')
+axs[2].imshow(np.squeeze(seg2[25,:,:]), cmap='gray')
 
 #%% 1. Processing
 
